@@ -1,0 +1,375 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentasi Sertifikat Tanah Elektronik</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1d4ed8; /* Biru cerah */
+            --accent-yellow: #facc15; /* Kuning aksen */
+            --dark-blue: #1e3a8a; /* Biru tua */
+            --gray-400: #9ca3af;
+            --gray-800: #1f2937;
+            --white: #ffffff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #bfdbfe, #dbeafe);
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .slide { display: none; opacity: 0; transition: opacity 0.5s ease-in-out; }
+        .slide.active { display: block; opacity: 1; }
+        .slide-content {
+            background: var(--white);
+            border-radius: 16px;
+            border: 3px solid var(--primary-blue);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .slide-header {
+            position: relative;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .slide-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 4px;
+            background: var(--accent-yellow);
+        }
+        .slide-number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--primary-blue);
+            color: var(--white);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark-blue);
+            text-align: center;
+            margin-bottom: 1rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+        ul, ol {
+            list-style: none;
+            padding-left: 0;
+        }
+        li {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+        li span.icon {
+            font-size: 1.5rem;
+            color: var(--accent-yellow);
+            margin-right: 0.75rem;
+            min-width: 30px;
+            text-align: center;
+        }
+        .nested-list {
+            padding-left: 2rem;
+            margin-top: 0.5rem;
+        }
+        .nested-list li span.icon {
+            color: var(--primary-blue);
+            font-size: 1.2rem;
+        }
+        .btn {
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        .btn:hover:not(:disabled) {
+            background: var(--dark-blue);
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            background: var(--gray-400);
+            cursor: not-allowed;
+        }
+        .flex { display: flex; }
+        .justify-between { justify-content: space-between; }
+        .mt-6 { margin-top: 1.5rem; }
+        .text-center { text-align: center; }
+        .text-lg { font-size: 1.125rem; }
+        .font-semibold { font-weight: 600; }
+		.image-container {
+			margin: 1.5rem auto 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 1rem;
+		}
+		.image-row {
+			display: flex;
+			justify-content: center;
+			gap: 1rem;
+			width: 100%;
+		}
+        .footer-image {
+            display: block;
+            max-width: 300px;
+            height: auto;
+            margin: 1.5rem auto 0;
+            border-radius: 12px;
+            border: 2px solid var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .footer-image:hover {
+            transform: scale(1.05);
+        }
+        @media (max-width: 640px) {
+            .footer-image { max-width: 200px; }
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+            li { font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Slide 1: Pengantar -->
+        <div id="slide-1" class="slide active">
+            <div class="slide-content">
+                <div class="slide-number">1</div>
+                <div class="slide-header">
+                    <h1>Cara Mudah Mendapatkan Sertifikat-EL</h1>
+                </div>
+                <h2>Pengantar</h2>
+                <ul>
+                    <li>
+                        <span class="icon">✔</span>
+                        <span><strong>Apa itu Sertifikat-EL?</strong> Dokumen digital bukti kepemilikan tanah oleh BPN (Peraturan Menteri ATR/BPN No. 3 Tahun 2023).</span>
+                    </li>
+                    <li>
+                        <span class="icon">✔</span>
+                        <span><strong>Manfaat:</strong></span>
+                    </li>
+                    <ul class="nested-list">
+                        <li><span class="icon">•</span>Aman dari kerusakan/kehilangan.</li>
+                        <li><span class="icon">•</span>Proses cepat dan efisien.</li>
+                        <li><span class="icon">•</span>Akses online via <em>Sentuh Tanahku</em>.</li>
+                    </ul>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 2: Syarat Pengurusan Sertifikat-EL -->
+        <div id="slide-2" class="slide">
+            <div class="slide-content">
+                <div class="slide-number">2</div>
+                <div class="slide-header">
+                    <h2>Syarat Pengurusan Sertifikat-EL</h2>
+                </div>
+                <ul>
+                    <li><span class="icon">✔</span>Formulir permohonan (ditandatangani di atas materai).</li>
+                    <li><span class="icon">✔</span>Fotokopi KTP dan KK (diverifikasi).</li>
+                    <li><span class="icon">✔</span>Bukti kepemilikan (Petok Leter C, AJB, SHM).</li>
+                    <li><span class="icon">✔</span>Surat ukur/peta bidang tanah (jika ada).</li>
+                    <li><span class="icon">✔</span>Fotokopi SPPT PBB tahun berjalan.</li>
+                    <li><span class="icon">✔</span>Surat kuasa (jika dikuasakan).</li>
+                    <li><span class="icon">✔</span>Sertifikat fisik (untuk konversi).</li>
+                    <li><span class="icon">⚠</span><strong>Catatan:</strong> Tanah tidak dalam sengketa.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 3: Cara Membuat Sertifikat-EL (Pendaftaran Baru) -->
+        <div id="slide-3" class="slide">
+            <div class="slide-content">
+                <div class="slide-number">3</div>
+                <div class="slide-header">
+                    <h2>Cara Membuat Sertifikat-EL (Pendaftaran Baru)</h2>
+                </div>
+                <ol>
+                    <li><span class="icon">1.</span><strong>Pengumpulan Data:</strong> Ajukan permohonan di Kantor Pertanahan atau via <em>Sentuh Tanahku</em>.</li>
+                    <li><span class="icon">2.</span><strong>Pengukuran & Pemetaan:</strong> Petugas BPN ukur tanah, pemohon hadir sebagai saksi.</li>
+                    <li><span class="icon">3.</span><strong>Pemeriksaan Yuridis:</strong> Verifikasi kepemilikan via dokumen dan saksi.</li>
+                    <li><span class="icon">4.</span><strong>Penerbitan Sertifikat-EL:</strong> Disahkan dengan tanda tangan elektronik, akses via <em>Sentuh Tanahku</em>.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Slide 4: Cara Konversi Sertifikat Fisik ke Sertifikat-EL -->
+        <div id="slide-4" class="slide">
+            <div class="slide-content">
+                <div class="slide-number">4</div>
+                <div class="slide-header">
+                    <h2>Cara Konversi Sertifikat Fisik ke Sertifikat-EL</h2>
+                </div>
+                <ol>
+                    <li><span class="icon">1.</span><strong>Persiapan Dokumen:</strong> Sertifikat fisik, formulir, KTP, KK, akta badan hukum (jika badan hukum).</li>
+                    <li><span class="icon">2.</span><strong>Pengajuan:</strong> Ajukan di Kantor Pertanahan, bayar PNPB blanko.</li>
+                    <li><span class="icon">3.</span><strong>Validasi:</strong> BPN cek data, sertifikat fisik ditarik sebagai warkah.</li>
+                    <li><span class="icon">4.</span><strong>Penerbitan Sertifikat-EL:</strong> Simpan di brankas elektronik, akses via <em>Sentuh Tanahku</em>.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Slide 5: Tips dan Catatan Penting -->
+        <div id="slide-5" class="slide">
+            <div class="slide-content">
+                <div class="slide-number">5</div>
+                <div class="slide-header">
+                    <h2>Tips dan Catatan Penting</h2>
+                </div>
+                <ul>
+                    <li><span class="icon">✔</span><strong>Keabsahan:</strong> Berlaku 2 tahun, perpanjang jika kedaluwarsa. Cek via QR Code.</li>
+                    <li><span class="icon">✔</span><strong>Tips:</strong></li>
+                    <ul class="nested-list">
+                        <li><span class="icon">•</span>Urus langsung di Kantor Pertanahan (hindari calo).</li>
+                        <li><span class="icon">•</span>Pastikan dokumen lengkap.</li>
+                        <li><span class="icon">•</span>Simpan akses brankas elektronik dengan aman.</li>
+                    </ul>
+                    <li><span class="icon">✔</span><strong>Waktu:</strong> 60-97 hari (pendaftaran baru).</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 6: Penutup -->
+        <div id="slide-6" class="slide">
+            <div class="slide-content">
+                <div class="slide-number">6</div>
+                <div class="slide-header">
+                    <h2>Penutup</h2>
+                </div>
+                <ul>
+                    <li><span class="icon">✔</span><strong>Kesimpulan:</strong> Sertifikat-EL solusi modern, aman, efisien, akses via <em>Sentuh Tanahku</em>.</li>
+                    <li><span class="icon">✔</span><strong>Ayo Bertindak:</strong> Daftar/konversi sekarang di Kantor Pertanahan atau aplikasi.</li>
+                    <li><span class="icon">✔</span><strong>Sumber:</strong> Kementerian ATR/BPN, Peraturan Menteri No. 3 Tahun 2023, <em>Sentuh Tanahku</em>.</li>
+                </ul>
+                <p class="text-center mt-6 text-lg font-semibold text-dark-blue">Terima kasih!</p>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons and Footer Image -->
+        <div class="flex justify-between mt-6">
+            <button id="prev" class="btn" disabled>Sebelumnya</button>
+            <button id="next" class="btn">Selanjutnya</button>
+        </div>
+		<div class="image-container">
+			<div class="image-row four images">
+				<img src="image/1.jpg" alt="Sertifikat" class="footer-image">
+				<img src="image/2.jpg" alt="Sertifikat" class="footer-image">
+				<img src="image/3.jpg" alt="Sertifikat" class="footer-image">
+				<img src="image/4.jpg" alt="Sertifikat" class="footer-image">
+			</div>
+			<div class="image-row three-images">
+				<img src="image/5.jpg" alt="Sertifikat" class="footer-image">
+				<img src="image/6.jpg" alt="Sertifikat" class="footer-image">
+				<img src="image/7.jpg" alt="Sertifikat" class="footer-image">
+			</div>
+		</div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 6;
+
+        function showSlide(slideNumber) {
+            document.querySelectorAll('.slide').forEach(slide => slide.classList.remove('active'));
+            document.getElementById(`slide-${slideNumber}`).classList.add('active');
+            document.getElementById('prev').disabled = slideNumber === 1;
+            document.getElementById('next').disabled = slideNumber === totalSlides;
+        }
+
+        document.getElementById('next').addEventListener('click', () => {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        });
+
+        document.getElementById('prev').addEventListener('click', () => {
+            if (currentSlide > 1) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        });
+
+        // Shortcut tombol panah kiri dan kanan
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowRight' && currentSlide < totalSlides) {
+                currentSlide++;
+                showSlide(currentSlide);
+            } else if (event.key === 'ArrowLeft' && currentSlide > 1) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        });
+
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>
